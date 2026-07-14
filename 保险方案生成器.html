@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>团体意外险保险计划书</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<style>
+@media print {
+  body { background: white !important; }
+  .no-print { display: none !important; }
+  #previewPane { width: 100% !important; padding: 0 !important; }
+  #previewPane > div { box-shadow: none !important; max-width: 100% !important; }
+}
+@media (max-width: 1024px) {
+  .editor-layout { flex-direction: column !important; }
+  #editPane, #previewPane { width: 100% !important; max-height: none !important; }
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+input, textarea, select { transition: border-color 0.15s, box-shadow 0.15s; }
+.nav-btn.active { background: #eff6ff; color: #1e40af; border-left: 3px solid #1e40af; }
+.form-section { scroll-margin-top: 16px; }
+
+/* 计划书预览专用样式 */
+.cover-page { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+.plan-header-bar { background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%); }
+.accent-line { background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b); }
+.summary-card { border-left: 4px solid #1e40af; }
+.data-table th { background: #f1f5f9; font-weight: 600; color: #334155; }
+.data-table td, .data-table th { border: 1px solid #e2e8f0; padding: 8px 12px; }
+.data-table tbody tr:hover { background: #f8fafc; }
+</style>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#1e40af',
+        primaryLight: '#3b82f6',
+        accent: '#f59e0b',
+      }
+    }
+  }
+}
+</script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen">
+
+<!-- 顶部导航 -->
+<header class="no-print bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+  <div class="max-w-full mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+        <i class="fa fa-shield text-white text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-gray-800">团体意外险保险计划书</h1>
+        <p class="text-xs text-gray-400">在线编辑 · 实时预览 · 一键打印</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <select id="templateSelect" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white cursor-pointer">
+        <option value="pingan-group">平安互联网团意（T）行标C</option>
+        <option value="employer">雇主责任险</option>
+        <option value="public">公众责任险</option>
+      </select>
+      <button onclick="resetForm()" class="text-sm border border-gray-300 rounded-lg px-4 py-1.5 hover:bg-gray-50 cursor-pointer transition">
+        <i class="fa fa-refresh mr-1"></i>重置
+      </button>
+      <button onclick="window.print()" class="text-sm bg-primary text-white rounded-lg px-4 py-1.5 hover:bg-blue-800 cursor-pointer transition">
+        <i class="fa fa-print mr-1"></i>打印 / 导出 PDF
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 主体 -->
+<div class="editor-layout flex max-w-full mx-auto" style="min-height: calc(100vh - 57px);">
+
+  <!-- ===== 左侧编辑面板 ===== -->
+  <div id="editPane" class="no-print w-5/12 bg-white border-r border-gray-200 overflow-y-auto" style="max-height: calc(100vh - 57px);">
+    <div class="border-b border-gray-100 px-4 py-2 flex gap-1 overflow-x-auto text-xs" id="sectionNav">
+      <button onclick="scrollToSection('sec-basic')" class="nav-btn active whitespace-nowrap px-3 py-1.5 rounded cursor-pointer transition" data-target="sec-basic">基础信息</button>
+      <button onclick="scrollToSection('sec-insurer')" class="nav-btn whitespace-nowrap px-3 py-1.5 rounded cursor-pointer transition" data-target="sec-insurer">保险公司</button>
+      <button onclick="scrollToSection('sec-plan')" class="nav-btn whitespace-nowrap px-3 py-1.5 rounded cursor-pointer transition" data-target="sec-plan">保障方案</button>
+      <button onclick="scrollToSection('sec-staff')" class="nav-btn whitespace-nowrap px-3 py-1.5 rounded cursor-pointer transition" data-target="sec-staff">人员测算</button>
+      <button onclick="scrollToSection('sec-terms')" class="nav-btn whitespace-nowrap px-3 py-1.5 rounded cursor-pointer transition" data-target="sec-terms">特别约定</button>
+      <button onclick="scrollToSection('sec-other')" class="nav-btn whitespace-nowrap px-3 py-1.5 rounded cursor-pointer transition" data-target="sec-other">其他设置</button>
+    </div>
+    <div class="p-5 space-y-5" id="editForm"></div>
+  </div>
+
+  <!-- ===== 右侧预览面板 ===== -->
+  <div id="previewPane" class="w-7/12 bg-gray-50 overflow-y-auto p-5" style="max-height: calc(100vh - 57px);">
+    <div class="bg-white shadow-lg mx-auto" style="max-width: 210mm;" id="previewContent"></div>
+  </div>
+
+</div>
+
+<script>
+// ==================== 数据模板 ====================
+const templates = {
+
+  'pingan-group': {
+    planName: '团体意外险保险计划书',
+    icon: 'fa-shield',
+    // 基础信息
+    defaults: {
+      genDate: '',
+      insurer: '中国平安财产保险股份有限公司',
+      insurerIntro: '中国平安保险（集团）股份有限公司（简称中国平安）是中国领先的综合金融集团，成立于1988年，总部位于深圳，业务涵盖保险、银行、投资、科技及医疗养老等领域。截至2024年，集团总资产突破12万亿元，连续6年蝉联全球保险企业市值第一，位列《财富》世界500强第53位。中国平安是中国第一家股份制保险企业，1988年经中国人民银行批准成立。其核心业务包括寿险、产险、银行、资产管理及科技服务，旗下拥有平安人寿、平安产险、平安银行等子公司。2023年集团营收达1.1万亿元，员工超34万人，总资产1.46万亿美元。',
+      clientName: '重庆恒源笙工程技术有限公司',
+      clientRegion: '重庆市 - 市辖区 - 万州区',
+      totalPremium: '1221.00',
+      planCount: '1',
+      insurancePeriod: '1 个月',
+      insuredCount: '10',
+      // 保障方案
+      coverageItems: [
+        { name: '意外身故及伤残保障', limit: '100', unit: '万元' },
+        { name: '医疗费用', limit: '10', unit: '万元' },
+        { name: '住院津贴', limit: '100/天，免赔天数3天，每次赔付不超过90天，累计赔付不超过180天', unit: '' },
+      ],
+      hasHeightWork: false,
+      disabilityStandard: '行标',
+      // 人员测算
+      staffList: [
+        { occupation: '砌筑-4类', count: 10, perPremium: '122.10' },
+      ],
+      // 特别约定
+      specialTerms: [
+        '本保单项下被保险人年龄为16-70（含）周岁，66（含）以上保额减半。',
+        '本保单承保1-5类职业，6类和拒保职业拒保。投保人如未按实际职业类别投保（实际职业类别高于投保职业类别情形），保险人按提交退保资料剩余保险天数退还保险费，不承担保险责任。',
+        '被保险人因遭受意外伤害事故并在符合特约的医院进行治疗，本公司就其事故发生之日起一百八十日内实际支出的符合当地社会医疗保险主管部门或其他公费医疗主管部门规定可报销的、必要的、合理的医疗费用，超过人民币100元的部分按100%比例给付意外伤害医疗保险金。',
+        '附加意外住院津贴单次免赔天数3天，每次赔付不超过90天，累计赔付不超过180天。',
+        '除高空作业外，未取得对应的特种作业证书进行特种作业操作引起的意外事故，保险公司不承担保险责任，特种作业定义以《特种作业人员安全技术培训考核管理规定》为准。',
+        '北京市平谷区/密云区/怀柔区、河北省三河市/青龙县、天津市滨海区/静海区、辽宁省铁岭县、山东省禹城，河南省信阳市/郏县、四川省宜宾市/雅安市、吉林省四平市、福建省南平下辖、湖北省黄冈市等地为拒绝承保地区，投保人企业注册所在地、被保险人企业注册所在地、或实际用工所在地位于上述地区的（不含30天内雇员短期出差），保险公司不予理赔。',
+        '投保时需如实告知"是否涉及高处作业"，被保人涉及高处作业的，需按涉高费率投保出单，投保时未按照涉高费率承保的保单，保险公司不承保任何情形下被保险人从事高处作业时所发生的任何事故。',
+        '投保人名称中含有以下关键字的企业团体拒保：钢结构、拆、房屋、疏浚、铁塔、钢丝绳、危险品、石油、幕墙、防腐、拆除、电梯、船舶、船厂、渔业、爆破、高压电。拒保工种：户外铁塔设备的架设、拆屋、迁屋工人、渔业、采矿业、采石业、采沙、桥、隧道作业、电站建设、船厂工人、外卖骑手、环卫工人、高压作业人员、代驾。',
+        '被保险人或其代表应在事故后48小时内通过服务电话（95511）向保险人报案（死亡案件需在24小时内报案），并在七天或经保险人书面同意延长的期限内以书面报告事故发生的经过、原因和损失程度，并协助进行调查核实。超过48小时报案，视为延迟报案，保险人对保险责任范围内的损失按绝对免赔率30%定损。',
+        '本保单指定医院范围为：中华人民共和国卫生部门评审确定的二级或二级以上的公立医院，但不包括主要作为诊所、康复、护理、休养、静养、戒酒、戒毒等或类似的医疗机构。首日急诊开放任意公立医院就诊。',
+        '附加条款赔偿限额如未做特别说明，每人赔偿限额、每次事故赔偿限额及累计赔偿限额同主险一致且包含在主险限额内；附加险免赔未作特别说明的适用主险免赔。保险合同中其他条款与本特别约定存在不一致的，以本特别约定为准。',
+        '（行标）经投保人申请并经保险人同意，本保险合同附加《平安产险附加定残标准、伤残赔付等级和给付比例约定保险》，意外伤残鉴定及赔付标准按照国家发布的《人身保险伤残评定标准及代码》确定。具体伤残赔付等级标准如下：一级100%，二级90%，三级80%，四级70%，五级60%，六级50%，七级40%，八级30%，九级20%，十级10%。',
+        '兹经双方同意，若投保人/被保险人与保险人发生争执，不能达成协议，投保人/被保险人自愿采取的解决方式为诉讼，起诉机构为天津铁路运输法院。本保险司法管辖区域为天津铁路运输法院。',
+      ],
+      // 附件下载
+      attachments: [
+        { name: '平安产险附加意外伤害医疗费用补偿保险（互联网版）条款', url: 'https://oss.glownest.cn/glownest/...' },
+        { name: '平安产险附加意外伤害住院津贴保险（互联网版）条款', url: 'https://oss.glownest.cn/glownest/...' },
+        { name: '平安产险意外伤害保险（互联网版）条款', url: 'https://oss.glownest.cn/glownest/...' },
+        { name: '用户协议', url: 'https://oss.glownest.cn/glownest/...' },
+        { name: '个人信息授权', url: 'https://oss.glownest.cn/glownest/...' },
+      ],
+      // 使用说明
+      usageNotes: [
+        '本计划书属于方案建议材料，仅供贵司内部沟通和投保前确认使用，不构成任何保险要约。最终承保范围、费率及责任内容，以保险公司的核保意见及正式保险合同为准。',
+        '本计划书不作为投保申请文件或保险合同组成部分，也不具备保险单证法律效力。具体保险责任、免责条款、理赔规则等内容，均以正式签发保单及保险条款载明内容为准。',
+        '本方案基于当前录入数据生成。若实际投保时投保人数、职业类别、保障范围、费率因子等信息发生变化，请重新提交承保评估并更新方案。',
+      ],
+    },
+  },
+
+  employer: {
+    planName: '企业雇主责任险报价计划书',
+    icon: 'fa-building-o',
+    defaults: {
+      genDate: '',
+      insurer: '中国人民财产保险股份有限公司',
+      insurerIntro: '中国人民财产保险股份有限公司（简称人保财险）是中国最大的财产保险公司，成立于1949年，总部位于北京。作为中国人民保险集团的核心子公司，人保财险在财产险市场份额持续领先。',
+      clientName: '×××科技有限公司',
+      clientRegion: '北京市 - 朝阳区',
+      totalPremium: '43,680.00',
+      planCount: '1',
+      insurancePeriod: '12 个月',
+      insuredCount: '120',
+      coverageItems: [
+        { name: '死亡/伤残赔偿限额', limit: '80', unit: '万元' },
+        { name: '医疗费用赔偿限额', limit: '8', unit: '万元' },
+        { name: '误工费（日赔付上限）', limit: '150', unit: '元/天' },
+        { name: '住院津贴', limit: '100', unit: '元/天' },
+        { name: '法律费用（每次事故）', limit: '10', unit: '万元' },
+      ],
+      hasHeightWork: false,
+      disabilityStandard: '行标',
+      staffList: [
+        { occupation: '管理/内勤人员', count: 30, perPremium: '252.00' },
+        { occupation: '技术/研发人员', count: 60, perPremium: '360.00' },
+        { occupation: '外勤/差旅人员', count: 30, perPremium: '484.00' },
+      ],
+      specialTerms: [
+        '本保单项下被保险人年龄为18-65周岁。',
+        '提供7×24小时全国报案服务，出险后30分钟内响应。',
+        '医疗费用5,000元以下的小额案件，材料齐全后3个工作日内结案。',
+        '保险期间内人员变动可随时申报增减，按日结算保费。',
+        '免费赠送2场/年安全生产与工伤预防培训。',
+        '材料齐全案件：10万以下5个工作日结案；10-50万10个工作日。',
+      ],
+      attachments: [
+        { name: '雇主责任险（2015版）标准条款', url: '' },
+        { name: '附加险条款', url: '' },
+      ],
+      usageNotes: [
+        '本计划书属于方案建议材料，仅供贵司内部沟通和投保前确认使用，不构成任何保险要约。',
+        '本计划书不作为投保申请文件或保险合同组成部分，也不具备保险单证法律效力。',
+        '本方案基于当前录入数据生成。若实际投保时信息发生变化，请重新提交评估。',
+      ],
+    },
+  },
+
+  public: {
+    planName: '公众责任险报价计划书',
+    icon: 'fa-building',
+    defaults: {
+      genDate: '',
+      insurer: '中国太平洋财产保险股份有限公司',
+      insurerIntro: '中国太平洋财产保险股份有限公司是中国太平洋保险集团旗下专业子公司，总部位于上海，在全国拥有40余家分公司，为客户提供全面的财产保险服务。',
+      clientName: '×××物业管理有限公司',
+      clientRegion: '广州市 - 天河区',
+      totalPremium: '15,800.00',
+      planCount: '1',
+      insurancePeriod: '12 个月',
+      insuredCount: '—',
+      coverageItems: [
+        { name: '累计赔偿限额', limit: '300', unit: '万元' },
+        { name: '每次事故赔偿限额', limit: '50', unit: '万元' },
+        { name: '人身伤亡（每人）', limit: '10,000', unit: '元' },
+        { name: '财产损失（每次）', limit: '5,000', unit: '元' },
+        { name: '法律费用（每次）', limit: '20', unit: '万元' },
+      ],
+      hasHeightWork: false,
+      disabilityStandard: '不适用',
+      staffList: [
+        { occupation: '综合费率', count: 1, perPremium: '15,800.00' },
+      ],
+      specialTerms: [
+        '本保单承保被保险人在经营场所内因经营活动发生意外造成第三者人身伤亡或财产损失。',
+        '7×24小时出险报案服务，重大事故2小时内到达现场。',
+        '每次事故绝对免赔额500元。',
+        '提供风险查勘与防灾防损建议，年度风险管理报告。',
+      ],
+      attachments: [
+        { name: '公众责任险标准条款', url: '' },
+      ],
+      usageNotes: [
+        '本计划书属于方案建议材料，仅供贵司内部沟通和投保前确认使用，不构成任何保险要约。',
+        '本计划书不作为投保申请文件或保险合同组成部分，也不具备保险单证法律效力。',
+        '本方案基于当前录入数据生成。若实际投保时信息发生变化，请重新提交评估。',
+      ],
+    },
+  },
+};
+
+let data = JSON.parse(JSON.stringify(templates['pingan-group'].defaults));
+let currentTemplate = 'pingan-group';
+
+// ==================== 初始化 ====================
+function init() {
+  document.getElementById('templateSelect').addEventListener('change', switchTemplate);
+  document.getElementById('editForm').addEventListener('input', function(e) { if (e.target.dataset.field) { syncField(e.target); renderPreview(); } });
+  document.getElementById('editForm').addEventListener('change', function(e) { if (e.target.dataset.field) { syncField(e.target); renderPreview(); } });
+  document.getElementById('sectionNav').addEventListener('click', function(e) {
+    const btn = e.target.closest('.nav-btn');
+    if (!btn) return;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+  document.getElementById('editPane').addEventListener('scroll', updateNavHighlight);
+  setTodayDate();
+  renderForm();
+  renderPreview();
+}
+
+function setTodayDate() {
+  const now = new Date();
+  const ymd = now.getFullYear() + '年' + String(now.getMonth()+1).padStart(2,'0') + '月' + String(now.getDate()).padStart(2,'0') + '日';
+  data.genDate = ymd;
+}
+
+function syncField(el) {
+  const path = el.dataset.field.split('.');
+  let obj = data;
+  for (let i = 0; i < path.length - 1; i++) obj = obj[path[i]];
+  if (el.type === 'checkbox') obj[path[path.length-1]] = el.checked;
+  else obj[path[path.length-1]] = el.value;
+  // 同步数组内嵌套对象
+  syncArrayData();
+}
+
+function syncArrayData() {
+  // 保障项目
+  data.coverageItems.forEach((_, i) => {
+    ['name','limit','unit'].forEach(f => {
+      const el = document.querySelector(`[data-field="coverageItems.${i}.${f}"]`);
+      if (el) data.coverageItems[i][f] = el.value;
+    });
+  });
+  // 人员测算
+  data.staffList.forEach((_, i) => {
+    ['occupation','count','perPremium'].forEach(f => {
+      const el = document.querySelector(`[data-field="staffList.${i}.${f}"]`);
+      if (el) data.staffList[i][f] = el.value;
+    });
+  });
+  // 特别约定
+  data.specialTerms.forEach((_, i) => {
+    const el = document.querySelector(`[data-field="specialTerms.${i}"]`);
+    if (el) data.specialTerms[i] = el.value;
+  });
+  // 使用说明
+  data.usageNotes.forEach((_, i) => {
+    const el = document.querySelector(`[data-field="usageNotes.${i}"]`);
+    if (el) data.usageNotes[i] = el.value;
+  });
+  // 附件
+  data.attachments.forEach((_, i) => {
+    ['name','url'].forEach(f => {
+      const el = document.querySelector(`[data-field="attachments.${i}.${f}"]`);
+      if (el) data.attachments[i][f] = el.value;
+    });
+  });
+  // 自动计算总人数和总保费
+  calcTotals();
+}
+
+function calcTotals() {
+  const totalStaff = data.staffList.reduce((s, r) => s + (parseInt(r.count) || 0), 0);
+  const totalPremium = data.staffList.reduce((s, r) => s + (parseFloat(r.perPremium) || 0) * (parseInt(r.count) || 0), 0);
+  data.insuredCount = String(totalStaff);
+  data.totalPremium = totalPremium.toFixed(2);
+  // 同步更新表单显示
+  const staffEl = document.querySelector('[data-field="insuredCount"]');
+  if (staffEl) staffEl.value = data.insuredCount;
+  const premiumEl = document.querySelector('[data-field="totalPremium"]');
+  if (premiumEl) premiumEl.value = data.totalPremium;
+}
+
+// ==================== 模板切换 ====================
+function switchTemplate() {
+  currentTemplate = document.getElementById('templateSelect').value;
+  data = JSON.parse(JSON.stringify(templates[currentTemplate].defaults));
+  setTodayDate();
+  renderForm();
+  renderPreview();
+}
+
+function resetForm() {
+  if (!confirm('确定要重置为默认值吗？已编辑内容将丢失。')) return;
+  data = JSON.parse(JSON.stringify(templates[currentTemplate].defaults));
+  setTodayDate();
+  renderForm();
+  renderPreview();
+}
+
+// ==================== 渲染编辑表单 ====================
+function renderForm() {
+  const d = data;
+  // 先同步数组数据再渲染
+  const html = `
+    <!-- 基础信息 -->
+    <div id="sec-basic" class="form-section">
+      <h3 class="text-sm font-bold text-primary mb-3 flex items-center gap-2"><i class="fa fa-info-circle"></i>基础信息</h3>
+      <div class="grid grid-cols-2 gap-3">
+        ${f('生成日期', 'genDate', 'text')}
+        ${f('投保单位', 'clientName', 'text')}
+        ${f('所属地区', 'clientRegion', 'text')}
+        ${f('总保费（元）', 'totalPremium', 'text', true)}
+        ${f('保险期间', 'insurancePeriod', 'text')}
+        ${f('参保人数', 'insuredCount', 'text', true)}
+      </div>
+    </div>
+
+    <!-- 保险公司 -->
+    <div id="sec-insurer" class="form-section pt-2">
+      <h3 class="text-sm font-bold text-primary mb-3 flex items-center gap-2"><i class="fa fa-building-o"></i>承保公司</h3>
+      ${f('保险公司名称', 'insurer', 'text')}
+      <label class="block mt-2"><span class="text-xs text-gray-400">公司简介</span>
+        <textarea data-field="insurerIntro" rows="4" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 mt-0.5 resize-y">${esc(d.insurerIntro)}</textarea>
+      </label>
+    </div>
+
+    <!-- 使用说明 -->
+    <div id="sec-other" class="form-section pt-2">
+      <details open>
+        <summary class="text-sm font-bold text-primary cursor-pointer flex items-center gap-2"><i class="fa fa-exclamation-circle"></i>使用说明 & 法律声明</summary>
+        <div class="mt-2 space-y-2">
+          ${d.usageNotes.map((n,i) => `<textarea data-field="usageNotes.${i}" rows="2" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-y">${esc(n)}</textarea>`).join('')}
+        </div>
+      </details>
+    </div>
+
+    <!-- 保障方案 -->
+    <div id="sec-plan" class="form-section pt-2">
+      <h3 class="text-sm font-bold text-primary mb-3 flex items-center gap-2"><i class="fa fa-list-alt"></i>保障方案</h3>
+      <div class="mb-2 flex items-center gap-4">
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="checkbox" data-field="hasHeightWork" ${d.hasHeightWork?'checked':''} class="w-4 h-4 rounded border-gray-300"> 涉及高处作业
+        </label>
+        ${f('伤残赔付标准', 'disabilityStandard', 'text')}
+      </div>
+      <p class="text-xs text-gray-400 mb-1">保障项目：</p>
+      ${d.coverageItems.map((item, i) => `
+        <div class="grid grid-cols-12 gap-2 mb-2 items-end bg-gray-50 p-2 rounded-lg">
+          <div class="col-span-5"><span class="text-xs text-gray-400">项目名称</span><input type="text" value="${esc(item.name)}" data-field="coverageItems.${i}.name" class="w-full text-sm border border-gray-200 rounded px-2 py-1.5"></div>
+          <div class="col-span-4"><span class="text-xs text-gray-400">赔偿限额/方案</span><input type="text" value="${esc(item.limit)}" data-field="coverageItems.${i}.limit" class="w-full text-sm border border-gray-200 rounded px-2 py-1.5"></div>
+          <div class="col-span-2"><span class="text-xs text-gray-400">单位</span><input type="text" value="${esc(item.unit)}" data-field="coverageItems.${i}.unit" class="w-full text-sm border border-gray-200 rounded px-2 py-1.5"></div>
+          <div class="col-span-1 text-right">
+            <button onclick="removeItem('coverageItems',${i});renderForm();renderPreview();" class="text-red-400 hover:text-red-600 text-xs cursor-pointer" title="删除"><i class="fa fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('')}
+      <button onclick="addCoverageItem();renderForm();renderPreview();" class="text-xs text-primary border border-primary rounded-lg px-3 py-1 hover:bg-blue-50 cursor-pointer transition">
+        <i class="fa fa-plus mr-1"></i>添加保障项目
+      </button>
+    </div>
+
+    <!-- 人员测算 -->
+    <div id="sec-staff" class="form-section pt-2">
+      <h3 class="text-sm font-bold text-primary mb-3 flex items-center gap-2"><i class="fa fa-users"></i>人员测算</h3>
+      <p class="text-xs text-gray-400 mb-1">人员信息明细：</p>
+      ${d.staffList.map((s, i) => `
+        <div class="grid grid-cols-12 gap-2 mb-2 items-end bg-gray-50 p-2 rounded-lg">
+          <div class="col-span-5"><span class="text-xs text-gray-400">职业类别</span><input type="text" value="${esc(s.occupation)}" data-field="staffList.${i}.occupation" class="w-full text-sm border border-gray-200 rounded px-2 py-1.5"></div>
+          <div class="col-span-3"><span class="text-xs text-gray-400">人数</span><input type="number" value="${s.count}" data-field="staffList.${i}.count" class="w-full text-sm border border-gray-200 rounded px-2 py-1.5"></div>
+          <div class="col-span-3"><span class="text-xs text-gray-400">人均保费</span><input type="text" value="${esc(s.perPremium)}" data-field="staffList.${i}.perPremium" class="w-full text-sm border border-gray-200 rounded px-2 py-1.5"></div>
+          <div class="col-span-1 text-right">
+            <button onclick="removeItem('staffList',${i});renderForm();renderPreview();" class="text-red-400 hover:text-red-600 text-xs cursor-pointer" title="删除"><i class="fa fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('')}
+      <button onclick="addStaffRow();renderForm();renderPreview();" class="text-xs text-primary border border-primary rounded-lg px-3 py-1 hover:bg-blue-50 cursor-pointer transition">
+        <i class="fa fa-plus mr-1"></i>添加人员分类
+      </button>
+    </div>
+
+    <!-- 特别约定 -->
+    <div id="sec-terms" class="form-section pt-2">
+      <h3 class="text-sm font-bold text-primary mb-3 flex items-center gap-2"><i class="fa fa-file-text-o"></i>特别约定</h3>
+      ${d.specialTerms.map((t, i) => `
+        <div class="flex items-start gap-2 mb-2">
+          <span class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-1">${i+1}</span>
+          <div class="flex-1 relative">
+            <textarea data-field="specialTerms.${i}" rows="2" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 resize-y pr-8">${esc(t)}</textarea>
+            <button onclick="removeItem('specialTerms',${i});renderForm();renderPreview();" class="absolute top-1 right-1 text-red-400 hover:text-red-600 text-xs cursor-pointer p-1" title="删除"><i class="fa fa-times"></i></button>
+          </div>
+        </div>
+      `).join('')}
+      <button onclick="addSpecialTerm();renderForm();renderPreview();" class="text-xs text-primary border border-primary rounded-lg px-3 py-1 hover:bg-blue-50 cursor-pointer transition">
+        <i class="fa fa-plus mr-1"></i>添加条款
+      </button>
+    </div>
+
+    <!-- 附件下载 -->
+    <div id="sec-other" class="form-section pt-2">
+      <details>
+        <summary class="text-sm font-bold text-primary cursor-pointer flex items-center gap-2"><i class="fa fa-download"></i>附件 & 条款下载</summary>
+        <div class="mt-2 space-y-2">
+          ${d.attachments.map((a, i) => `
+            <div class="grid grid-cols-12 gap-2 items-end">
+              <div class="col-span-5"><input type="text" value="${esc(a.name)}" data-field="attachments.${i}.name" class="w-full text-xs border border-gray-200 rounded px-2 py-1.5" placeholder="文件名称"></div>
+              <div class="col-span-6"><input type="text" value="${esc(a.url)}" data-field="attachments.${i}.url" class="w-full text-xs border border-gray-200 rounded px-2 py-1.5" placeholder="链接地址"></div>
+              <div class="col-span-1"><button onclick="removeItem('attachments',${i});renderForm();renderPreview();" class="text-red-400 hover:text-red-600 text-xs"><i class="fa fa-trash"></i></button></div>
+            </div>
+          `).join('')}
+          <button onclick="addAttachment();renderForm();renderPreview();" class="text-xs text-primary border border-primary rounded-lg px-3 py-1 hover:bg-blue-50 cursor-pointer transition">
+            <i class="fa fa-plus mr-1"></i>添加附件
+          </button>
+        </div>
+      </details>
+    </div>
+  `;
+  document.getElementById('editForm').innerHTML = html;
+}
+
+function f(label, fieldPath, type, readonly) {
+  const val = fieldPath.split('.').reduce((o,k) => o[k], data);
+  const ro = readonly ? 'readonly tabindex="-1"' : '';
+  const style = readonly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '';
+  return `<label class="block"><span class="text-xs text-gray-400">${label}${readonly?' <span class="text-blue-500">(自动计算)</span>':''}</span><input type="${type}" value="${esc(String(val??''))}" data-field="${fieldPath}" ${ro} class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 mt-0.5 ${style}"></label>`;
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+// ==================== 数组操作 ====================
+function addCoverageItem() {
+  data.coverageItems.push({ name: '新保障项目', limit: '', unit: '' });
+}
+function addStaffRow() {
+  data.staffList.push({ occupation: '新职业类别', count: 0, perPremium: '' });
+}
+function addSpecialTerm() {
+  data.specialTerms.push('新特别约定条款...');
+}
+function addAttachment() {
+  data.attachments.push({ name: '新附件', url: '' });
+}
+function removeItem(arrName, index) {
+  if (data[arrName].length <= 1 && arrName !== 'attachments') { alert('至少保留一项'); return; }
+  data[arrName].splice(index, 1);
+}
+
+// ==================== 渲染预览（匹配平安模板） ====================
+function renderPreview() {
+  calcTotals();
+  const d = data;
+  const t = templates[currentTemplate];
+
+  // 使用自动计算的值
+  const totalStaff = parseInt(d.insuredCount) || 0;
+
+  const html = `
+    <!-- ===== 第1页：封面 ===== -->
+    <div class="cover-page border-b-2 border-gray-200">
+      <!-- 顶栏 -->
+      <div class="plan-header-bar text-white px-8 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <i class="fa ${t.icon} text-2xl"></i>
+          <div>
+            <p class="text-xs opacity-80 tracking-widest">I N S U R A N C E &nbsp; P R O P O S A L</p>
+            <p class="text-sm font-bold">${esc(t.planName)}</p>
+          </div>
+        </div>
+        <div class="text-right text-xs opacity-90">
+          <p>${esc(d.genDate)}</p>
+        </div>
+      </div>
+
+      <!-- 封面主体 -->
+      <div class="p-10">
+        <div class="text-center mb-8">
+          <p class="text-lg text-primary font-bold">${esc(d.insurer)}</p>
+          <h1 class="text-2xl font-bold text-gray-800 mt-4">${esc(t.planName)}</h1>
+        </div>
+
+        <div class="text-center mt-8 text-xs text-gray-400">
+          <p>方案内容以正式投保、核保及最终保单条款为准，当前文档用于方案沟通、预算确认与资料留存参考。</p>
+        </div>
+
+        <!-- 底部大字 -->
+        <div class="text-center mt-10 border-t border-gray-200 pt-6">
+          <p class="text-xs tracking-widest text-gray-400">INSURANCE SCHEMES</p>
+          <p class="text-lg font-bold text-gray-700 tracking-wide">PROTECTION PLAN</p>
+          <p class="text-sm text-gray-500 mt-1">${esc(d.insurer)}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 第2页：使用说明 / 致客户信 ===== -->
+    <div class="border-b border-gray-200 print-break">
+      <div class="plan-header-bar text-white px-6 py-3 flex items-center gap-2">
+        <i class="fa ${t.icon}"></i>
+        <span class="text-sm font-bold">${esc(t.planName)}</span>
+        <span class="text-xs opacity-70 ml-auto">${esc(d.insurer)} · 投保计划书 · ${esc(d.genDate)}</span>
+      </div>
+      <div class="p-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">使用说明</h3>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6">
+          <h4 class="font-bold text-primary mb-2">致客户信</h4>
+          <p class="text-sm text-gray-700">尊敬的客户：</p>
+          <p class="text-sm text-gray-700 mt-1">感谢贵司选择 <span class="font-medium">乐优保</span> 为您提供团体保险方案设计与服务对接支持。为确保投保流程合规顺畅，请在使用本计划书时重点关注以下事项。</p>
+        </div>
+
+        <h4 class="font-bold text-gray-700 mb-3">投保须知声明</h4>
+        <div class="space-y-3 text-sm">
+          ${d.usageNotes.map((n, i) => {
+            const labels = ['一', '二', '三'];
+            const titles = ['方案建议属性说明', '法律文件效力声明', '信息核查义务声明'];
+            return `
+              <div class="border border-gray-200 rounded-lg p-4">
+                <p class="font-bold text-gray-700 mb-1">${labels[i]||i+1}、${titles[i]||''}</p>
+                <p class="text-gray-600 text-xs leading-relaxed">${esc(n)}</p>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 第3页：承保背景 / 保险公司简介 ===== -->
+    <div class="border-b border-gray-200 print-break">
+      <div class="plan-header-bar text-white px-6 py-3 flex items-center gap-2">
+        <i class="fa ${t.icon}"></i>
+        <span class="text-sm font-bold">${esc(t.planName)}</span>
+        <span class="text-xs opacity-70 ml-auto">${esc(d.insurer)} · 投保计划书 · ${esc(d.genDate)}</span>
+      </div>
+      <div class="p-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">承保背景</h3>
+        <h4 class="text-base font-bold text-gray-700 mb-3">保险公司简介</h4>
+        <p class="text-xs text-gray-400 mb-4">以下内容用于展示承保主体背景信息，帮助投保方建立品牌认知与服务预期。</p>
+        <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">${esc(d.insurerIntro)}</div>
+      </div>
+    </div>
+
+    <!-- ===== 第4页：方案概览 ===== -->
+    <div class="border-b border-gray-200 print-break">
+      <div class="plan-header-bar text-white px-6 py-3 flex items-center gap-2">
+        <i class="fa ${t.icon}"></i>
+        <span class="text-sm font-bold">${esc(t.planName)}</span>
+        <span class="text-xs opacity-70 ml-auto">${esc(d.insurer)} · 投保计划书 · ${esc(d.genDate)}</span>
+      </div>
+      <div class="p-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">方案概览</h3>
+        <p class="text-xs text-gray-400 mb-4">投保基础信息：汇总当前计划书涉及的基础投保信息、保障期限与测算结果。</p>
+
+        <!-- 概览指标卡 -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="border border-gray-200 rounded-lg p-5 text-center bg-gray-50">
+            <p class="text-xs text-gray-400 mb-1">总保费</p>
+            <p class="text-3xl font-bold text-accent">${esc(d.totalPremium)} 元</p>
+          </div>
+          <div class="border border-gray-200 rounded-lg p-5 text-center bg-gray-50">
+            <p class="text-xs text-gray-400 mb-1">方案数量</p>
+            <p class="text-3xl font-bold text-primary">${esc(d.planCount)} 套</p>
+          </div>
+        </div>
+
+        <table class="data-table w-full text-sm">
+          <tbody>
+            <tr><td class="text-gray-500 w-32">总保费</td><td class="font-bold text-primary">${esc(d.totalPremium)} 元</td></tr>
+            <tr><td class="text-gray-500">保险期间</td><td>${esc(d.insurancePeriod)}</td></tr>
+            <tr><td class="text-gray-500">投保人名称</td><td class="font-medium">${esc(d.clientName)}</td></tr>
+            <tr><td class="text-gray-500">所属地区</td><td>${esc(d.clientRegion)}</td></tr>
+            <tr><td class="text-gray-500">承保公司</td><td>${esc(d.insurer)}</td></tr>
+            <tr><td class="text-gray-500">参保人数</td><td>${totalStaff} 人</td></tr>
+            <tr><td class="text-gray-500">方案数量</td><td>${esc(d.planCount)} 套</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== 第5页：保障方案详情 ===== -->
+    <div class="border-b border-gray-200 print-break">
+      <div class="plan-header-bar text-white px-6 py-3 flex items-center gap-2">
+        <i class="fa ${t.icon}"></i>
+        <span class="text-sm font-bold">${esc(t.planName)}</span>
+        <span class="text-xs opacity-70 ml-auto">${esc(d.insurer)} · 投保计划书 · ${esc(d.genDate)}</span>
+      </div>
+      <div class="p-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">保障方案</h3>
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <div class="bg-gray-50 px-5 py-3 flex items-center gap-4 text-sm">
+            <span class="font-bold text-primary">方案 1</span>
+            <span class="text-gray-400">|</span>
+            <span>保障项数：<b>${d.coverageItems.length} 项</b></span>
+            <span class="text-gray-400">|</span>
+            <span>参保人数：<b>${totalStaff} 人</b></span>
+            <span class="text-gray-400">|</span>
+            <span>涉高情况：<b>${d.hasHeightWork?'涉高':'不涉高'}</b></span>
+          </div>
+          <div class="p-5">
+            <h4 class="text-sm font-bold text-gray-700 mb-3">保险方案详情</h4>
+            <table class="data-table w-full text-sm">
+              <thead>
+                <tr><th class="text-left">保障项目</th><th class="text-left">赔偿限额 / 保障方案</th></tr>
+              </thead>
+              <tbody>
+                ${d.coverageItems.map(item => `
+                  <tr>
+                    <td class="font-medium">${esc(item.name)}</td>
+                    <td>${esc(item.limit)}${item.unit?' '+esc(item.unit):''}</td>
+                  </tr>
+                `).join('')}
+                <tr><td>是否涉高</td><td>${d.hasHeightWork?'涉高':'不涉高'}</td></tr>
+                <tr><td>伤残赔付比例</td><td>${esc(d.disabilityStandard)}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 第6页：人员测算 ===== -->
+    <div class="border-b border-gray-200 print-break">
+      <div class="plan-header-bar text-white px-6 py-3 flex items-center gap-2">
+        <i class="fa ${t.icon}"></i>
+        <span class="text-sm font-bold">${esc(t.planName)}</span>
+        <span class="text-xs opacity-70 ml-auto">${esc(d.insurer)} · 投保计划书 · ${esc(d.genDate)}</span>
+      </div>
+      <div class="p-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">人员测算</h3>
+        <p class="text-xs text-gray-400 mb-4">人员信息：该页面用于查看各职业类别的参保人数与人均保费分布。</p>
+        <div class="flex items-center gap-4 text-sm mb-4">
+          <span>方案数量：<b>${esc(d.planCount)} 套</b></span>
+          <span>参保人数：<b>${totalStaff} 人</b></span>
+        </div>
+        <table class="data-table w-full text-sm">
+          <thead>
+            <tr><th>职业类别</th><th class="text-center">人数</th><th class="text-right">人均保费</th></tr>
+          </thead>
+          <tbody>
+            ${d.staffList.map(s => `
+              <tr>
+                <td>${esc(s.occupation)}</td>
+                <td class="text-center">${s.count}</td>
+                <td class="text-right font-medium">${esc(s.perPremium)}</td>
+              </tr>
+            `).join('')}
+            <tr class="bg-gray-50 font-bold">
+              <td>合计</td>
+              <td class="text-center">${totalStaff}</td>
+              <td class="text-right">${esc(d.totalPremium)} 元</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== 第7页+：特别约定 ===== -->
+    <div class="border-b border-gray-200 print-break">
+      <div class="plan-header-bar text-white px-6 py-3 flex items-center gap-2">
+        <i class="fa ${t.icon}"></i>
+        <span class="text-sm font-bold">${esc(t.planName)}</span>
+        <span class="text-xs opacity-70 ml-auto">${esc(d.insurer)} · 投保计划书 · ${esc(d.genDate)}</span>
+      </div>
+      <div class="p-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">重点阅读</h3>
+        <h4 class="text-base font-bold text-gray-700 mb-3">特别约定</h4>
+        <p class="text-xs text-gray-400 mb-4">以下内容来自产品配置，请在投保前重点确认条款说明与特别约定。</p>
+        <div class="space-y-2 text-sm">
+          ${d.specialTerms.map((t, i) => `
+            <div class="flex items-start gap-2">
+              <span class="text-primary font-bold shrink-0">${i+1}、</span>
+              <span class="text-gray-700 leading-relaxed">${esc(t)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 最后一页：资料留存 / 附件下载 ===== -->
+    ${d.attachments.length > 0 ? `
+    <div class="print-break">
+      <div class="plan-header-bar text-white px-6 py-3 flex items-center gap-2">
+        <i class="fa ${t.icon}"></i>
+        <span class="text-sm font-bold">${esc(t.planName)}</span>
+        <span class="text-xs opacity-70 ml-auto">${esc(d.insurer)} · 投保计划书 · ${esc(d.genDate)}</span>
+      </div>
+      <div class="p-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">资料留存</h3>
+        <h4 class="text-base font-bold text-gray-700 mb-3">保险条款下载</h4>
+        <p class="text-xs text-gray-400 mb-4">条款及附件可通过下列链接打开，建议另行下载留存。</p>
+        <table class="data-table w-full text-sm">
+          <thead>
+            <tr><th>资料名称</th><th>链接地址</th></tr>
+          </thead>
+          <tbody>
+            ${d.attachments.map(a => `
+              <tr>
+                <td>${esc(a.name)}</td>
+                <td class="text-xs text-primary break-all">${esc(a.url)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    ` : ''}
+  `;
+
+  document.getElementById('previewContent').innerHTML = html;
+}
+
+// ==================== 辅助 ====================
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function updateNavHighlight() {
+  const sections = document.querySelectorAll('.form-section');
+  const btns = document.querySelectorAll('.nav-btn');
+  let cur = null;
+  sections.forEach(s => { if (s.getBoundingClientRect().top < 200) cur = s.id; });
+  btns.forEach(b => b.classList.toggle('active', b.dataset.target === cur));
+}
+
+init();
+</script>
+</body>
+</html>
