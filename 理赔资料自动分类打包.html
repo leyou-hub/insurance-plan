@@ -90,6 +90,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#3b82f6;box-sh
 <div class="flex items-center gap-2">
 <div class="flex items-center gap-1.5 bg-blue-50 rounded-lg px-2.5 py-1"><i class="fa fa-user-circle text-blue-500 text-sm"></i><span id="currentUserDisplay" class="text-xs font-medium text-blue-700"></span><span id="masterBadge" class="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold hidden">管理员</span></div>
 <button onclick="toggleHistory()" class="text-sm text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition cursor-pointer"><i class="fa fa-history"></i></button>
+<button onclick="openSync()" class="text-sm text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition cursor-pointer" title="数据同步"><i class="fa fa-cloud"></i></button>
 <button onclick="resetAll()" class="text-sm text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition cursor-pointer"><i class="fa fa-refresh"></i></button>
 <button onclick="doLogout()" class="text-sm text-red-400 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition cursor-pointer"><i class="fa fa-sign-out"></i></button>
 </div>
@@ -256,6 +257,24 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#3b82f6;box-sh
 <div class="flex gap-3 mt-5">
 <button onclick="savePkgEdit()" class="flex-1 bg-primary text-white rounded-lg py-2.5 cursor-pointer hover:bg-blue-800 font-medium"><i class="fa fa-save mr-1"></i>保存</button>
 <button onclick="closeEditModal()" class="flex-1 bg-gray-200 text-gray-700 rounded-lg py-2.5 cursor-pointer hover:bg-gray-300">取消</button>
+</div>
+</div>
+</div>
+
+<!-- 同步设置弹窗 -->
+<div id="syncModal" class="lightbox hidden" style="z-index:10002" onclick="closeSync()">
+<div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl" onclick="event.stopPropagation()">
+<h3 class="font-bold text-gray-800 mb-3 text-lg"><i class="fa fa-cloud text-primary mr-2"></i>数据同步设置</h3>
+<p class="text-sm text-gray-500 mb-3">使用 GitHub Gist 在多台电脑间同步数据（套餐数据、资料包记录）</p>
+<div class="mb-3"><label class="block text-xs font-medium text-gray-600 mb-1">GitHub Token</label><input id="syncToken" type="password" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="ghp_xxxxxxxxxxxx"></div>
+<div class="mb-4"><label class="block text-xs font-medium text-gray-600 mb-1">Gist ID（自动生成）</label><input id="syncGistId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50" readonly placeholder="首次同步自动创建"></div>
+<div class="flex gap-3 mb-3">
+<button onclick="doSync()" class="flex-1 bg-green-600 text-white rounded-lg py-2 cursor-pointer hover:bg-green-700 font-medium"><i class="fa fa-cloud-upload mr-1"></i>立即同步</button>
+<button onclick="doPull()" class="flex-1 bg-blue-600 text-white rounded-lg py-2 cursor-pointer hover:bg-blue-700 font-medium"><i class="fa fa-cloud-download mr-1"></i>拉取数据</button>
+</div>
+<div class="flex gap-3">
+<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="syncAuto" checked class="w-4 h-4 text-primary"> <span class="text-xs text-gray-600">操作后自动同步</span></label>
+<button onclick="closeSync()" class="flex-1 bg-gray-200 text-gray-700 rounded-lg py-2 cursor-pointer hover:bg-gray-300 text-sm">关闭</button>
 </div>
 </div>
 </div>
@@ -577,7 +596,7 @@ async function downloadZip(){
     var zn=dn+'_理赔资料.zip',dbId=gId();
     var isComplete=checkAllComplete()&&dn;
     idbPut(dbId,blob,{dn:dn,at:S.accType,zn:zn,t:new Date().toLocaleString('zh-CN')}).then(function(){aPkg({dbId:dbId,dn:dn,at:S.accType,fc:tf,cc:cns.length,zn:zn,cats:cns,status:isComplete?'done':'draft'})}).catch(function(e){console.error(e);aPkg({dn:dn,at:S.accType,fc:tf,cc:cns.length,zn:zn,cats:cns})});
-    saveAs(blob,zn);aHist({dn:dn,at:S.accType,fc:tf,cc:cns.length,zn:zn});toast('打包完成，下载已开始！');
+    saveAs(blob,zn);aHist({dn:dn,at:S.accType,fc:tf,cc:cns.length,zn:zn});toast('打包完成，下载已开始！');autoSync();
   }catch(e){console.error(e);toast('打包失败','fa-times-circle')}
 }
 
@@ -639,7 +658,7 @@ function batchDelete(){var ids=getSIds();if(ids.length===0)return;if(!confirm('�
 function toggleClosed(cb){var id=cb.getAttribute('data-pid');var pkgs=gPkgs();var p=pkgs.find(function(x){return x.id===id});if(p){p.closed=cb.checked;sPkgs(pkgs);S.q.all=pkgs}}
 function reuploadPkg(id){var p=S.q.all.find(function(x){return x.id===id});if(!p)return;resetState();switchMainTab('upload');if(p.xd){EXF.forEach(function(k){S.excel[k]=p.xd[k]||''});}if(p.at){S.accType=p.at;setTimeout(function(){var r=document.querySelector('input[name=accidentType][value=\"'+p.at+'\"]');if(r){r.checked=true;onAccidentTypeChange();}},200);}if(p.dn){var dnEl=document.getElementById('driverName');if(dnEl)dnEl.value=p.dn;}if(p.cats&&p.cats.length){p.cats.forEach(function(cn){var c=CATS.find(function(x){return x.n===cn});if(c){S.sCats.push(c.id);var cb=document.getElementById('cb-'+c.id);if(cb)cb.checked=true;}});onCT();}renderCS();updateSNB();
   if(p.status==='draft'){restoreDraftFiles(p);}
-  var msg=p.status==='draft'?'已加载草稿，正在恢复文件...':'已加载资料包信息，请补充文件后重新打包';toast(msg);}
+  var msg=p.status==='draft'?'已加载草稿，正在恢复文件...':'已加载资料包信息，请补充文件后重新打包';toast(msg);autoSync();}
 
 async function restoreDraftFiles(p){
   var dbId='draft_'+p.id;
@@ -671,7 +690,7 @@ function saveDraft(){
   toast(isComplete?'所有资料已齐全，状态为已打包':('草稿已保存（'+totalFiles+' 个文件，'+cns.length+' 个分类）'))
 }
 function updatePayback(inp){var id=inp.getAttribute('data-pid');var pkgs=gPkgs();var p=pkgs.find(function(x){return x.id===id});if(p){if(!p.xd)p.xd={};p.xd.paybackAmount=inp.value;sPkgs(pkgs);S.q.all=pkgs;toast('回款金额已更新')}}
-function savePkgEdit(){var id=document.getElementById('editPkgId').value;var pkgs=gPkgs();var p=pkgs.find(function(x){return x.id===id});if(!p)return;if(!p.xd)p.xd={};p.xd.policyNo=document.getElementById('edPolicyNo').value;p.xd.filingDate=document.getElementById('edFilingDate').value;p.xd.startDate=document.getElementById('edStartDate').value;p.xd.endDate=document.getElementById('edEndDate').value;p.xd.custName=document.getElementById('edCustName').value;p.xd.custPhone=document.getElementById('edCustPhone').value;p.xd.custId=document.getElementById('edCustId').value;p.xd.accDate=document.getElementById('edAccDate').value;p.xd.accPlace=document.getElementById('edAccPlace').value;p.xd.lossAmount=document.getElementById('edLossAmount').value;p.xd.lossDate=document.getElementById('edLossDate').value;p.xd.paybackAmount=document.getElementById('edPaybackAmount').value;p.closed=document.getElementById('edClosed').checked;sPkgs(pkgs);S.q.all=pkgs;closeEditModal();renderQR();toast('资料包信息已更新')}
+function savePkgEdit(){var id=document.getElementById('editPkgId').value;var pkgs=gPkgs();var p=pkgs.find(function(x){return x.id===id});if(!p)return;if(!p.xd)p.xd={};p.xd.policyNo=document.getElementById('edPolicyNo').value;p.xd.filingDate=document.getElementById('edFilingDate').value;p.xd.startDate=document.getElementById('edStartDate').value;p.xd.endDate=document.getElementById('edEndDate').value;p.xd.custName=document.getElementById('edCustName').value;p.xd.custPhone=document.getElementById('edCustPhone').value;p.xd.custId=document.getElementById('edCustId').value;p.xd.accDate=document.getElementById('edAccDate').value;p.xd.accPlace=document.getElementById('edAccPlace').value;p.xd.lossAmount=document.getElementById('edLossAmount').value;p.xd.lossDate=document.getElementById('edLossDate').value;p.xd.paybackAmount=document.getElementById('edPaybackAmount').value;p.closed=document.getElementById('edClosed').checked;sPkgs(pkgs);S.q.all=pkgs;closeEditModal();renderQR();toast('资料包信息已更新');autoSync()}
 
 // ===== 批量清单下载 (Excel) =====
 function batchDownloadManifest(){var ids=getSIds();if(ids.length===0)return;
@@ -745,6 +764,18 @@ function importPackages(e){var file=e.target.files[0];if(!file)return;
 
 // ===== 重置 =====
 function resetAll(){var hf=false;Object.keys(S.files).forEach(function(k){if(S.files[k]&&S.files[k].length>0)hf=true});if(hf&&!confirm('确定重新开始？'))return;resetState();switchMainTab('upload');renderCS();updateSNB();toast('已重置')}
+
+// ===== 数据同步 (GitHub Gist) =====
+var SYNC_KEY='claims_sync_cfg';
+function getSyncCfg(){try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch(e){return{}}}
+function saveSyncCfg(c){localStorage.setItem(SYNC_KEY,JSON.stringify(c))}
+function openSync(){var c=getSyncCfg();document.getElementById('syncToken').value=c.token||'';document.getElementById('syncGistId').value=c.gistId||'';document.getElementById('syncAuto').checked=c.auto!==false;document.getElementById('syncModal').classList.remove('hidden')}
+function closeSync(){var t=document.getElementById('syncToken').value.trim();var g=document.getElementById('syncGistId').value.trim();var a=document.getElementById('syncAuto').checked;saveSyncCfg({token:t,gistId:g,auto:a});document.getElementById('syncModal').classList.add('hidden')}
+function autoSync(){var c=getSyncCfg();if(c.token&&c.auto!==false)doSync()}
+
+async function doSync(){var c=getSyncCfg();var t=c.token||document.getElementById('syncToken').value.trim();if(!t){toast('请先填写 GitHub Token','fa-exclamation-circle',4000);return}saveSyncCfg({token:t,gistId:c.gistId,auto:c.auto!==false});var data={accounts:getAccounts(),packages:gPkgs(),time:Date.now()};try{var resp;if(c.gistId){resp=await fetch('https://api.github.com/gists/'+c.gistId,{method:'PATCH',headers:{'Authorization':'token '+t,'Content-Type':'application/json'},body:JSON.stringify({files:{'claims_data.json':{content:JSON.stringify(data,null,2)}}})})}else{resp=await fetch('https://api.github.com/gists',{method:'POST',headers:{'Authorization':'token '+t,'Content-Type':'application/json'},body:JSON.stringify({description:'租驾无忧资料整理系统-数据同步',public:false,files:{'claims_data.json':{content:JSON.stringify(data,null,2)}}})})}var result=await resp.json();if(result.id){c.gistId=result.id;saveSyncCfg(c);document.getElementById('syncGistId').value=result.id;toast('同步成功 '+new Date().toLocaleTimeString())}else{toast('同步失败: '+(result.message||'未知错误'),'fa-times-circle',4000)}}catch(e){toast('同步失败，请检查网络和Token','fa-times-circle',4000)}}
+
+async function doPull(){var c=getSyncCfg();var t=c.token||document.getElementById('syncToken').value.trim();if(!t||!c.gistId){toast('请先填写Token并同步一次','fa-exclamation-circle',4000);return}try{var resp=await fetch('https://api.github.com/gists/'+c.gistId,{headers:{'Authorization':'token '+t}});var data=await resp.json();if(data.files&&data.files['claims_data.json']){var remote=JSON.parse(data.files['claims_data.json'].content);if(remote.accounts){saveAccounts(remote.accounts)}if(remote.packages){var local=gPkgs();var merged={};local.forEach(function(p){merged[p.id]=p});remote.packages.forEach(function(p){if(!merged[p.id]){merged[p.id]=p;merged[p.id]._fromRemote=true}});var mergedArr=Object.values(merged);mergedArr.sort(function(a,b){return(b.ts||0)-(a.ts||0)});if(mergedArr.length>500)mergedArr=mergedArr.slice(0,500);sPkgs(mergedArr)}S.q.all=gPkgs();renderQR();toast('数据已拉取并合并')}else{toast('远程无数据','fa-exclamation-circle',4000)}}catch(e){toast('拉取失败','fa-times-circle',4000)}}
 
 // ===== 初始化 =====
 document.title='JS_OK';
